@@ -1,4 +1,10 @@
+# Add these imports at the top (below existing ones)
+from modules.tts_engine import speak_text
+import speech_recognition as sr
+from modules.navigation.navigation_mode import start_navigation
+
 commands = {}
+
 def register_voice_command(phrase, callback): commands[phrase.lower()] = callback
 _listening = False
 
@@ -36,3 +42,25 @@ def start_voice_listening():
 def stop_voice_listening():
     global _listening
     _listening = False
+
+def activate_navigation_mode():
+    """Activates Navigation Mode through voice input."""
+    try:
+        speak_text("Navigation mode activated. Where would you like to go?")
+        r = sr.Recognizer()
+        mic = sr.Microphone()
+
+        with mic as source:
+            r.adjust_for_ambient_noise(source, duration=0.8)
+            audio = r.listen(source, timeout=8, phrase_time_limit=6)
+
+        destination = r.recognize_google(audio)
+        speak_text(f"Navigating to {destination}")
+        start_navigation(destination)
+
+    except sr.UnknownValueError:
+        speak_text("Sorry, I didn't catch that. Please repeat the destination.")
+    except Exception as e:
+        speak_text("Navigation mode encountered an error.")
+        print(f"[Navigation Error] {e}")
+
